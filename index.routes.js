@@ -1,12 +1,13 @@
 import { Router } from "express";
-import { getAPI, postAPI, getPreguntas, registrarSesion, registrarUsuario } from "./controladores/index.controladores.js";
+import { getAPI, postAPI, registrarSesion, registrarUsuario,  getPreguntasQuiz, getPreguntaAlarma } from "./controladores/index.controladores.js";
 import bcrypt from "bcrypt";
 
 const router = Router();
 
 router.get("/", getAPI);
 router.post("/", postAPI);
-router.get("/preguntas", getPreguntas);
+router.get("/preguntas/quiz/:nivel", getPreguntasQuiz);
+router.get("/preguntas/alarma",  getPreguntaAlarma);
 router.post("/sesion", registrarSesion);
 router.post("/registro", registrarUsuario);
 

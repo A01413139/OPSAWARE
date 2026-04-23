@@ -11,10 +11,72 @@ export const postAPI = (req, res) => {
   res.json({ mensaje: "POST recibido", datos: req.body });
 };
 
-export const getPreguntas = async (req, res) => {
+export const getPreguntasQuiz = async (req, res) => {
+  const { nivel } = req.params;
+
   try {
-    const result = await sql.query("SELECT * FROM preguntas ORDER BY RANDOM() LIMIT 10");
-    res.json(result.rows);
+    const preguntas = await sql.query(`
+      SELECT p.id, p.questions_text
+      FROM public."PREGUNTA" p
+      WHERE p.level_id = $1
+      ORDER BY RANDOM()
+      LIMIT 10
+  `, [nivel]);
+
+    if (preguntas.rows.length === 0) {
+      return res.status(404).json({ error: "No hay preguntas para ese nivel" });
+    }
+
+    const resultado = [];
+
+    for (const pregunta of preguntas.rows) {
+      const respuestas = await sql.query(`
+        SELECT id, questions_id, answers_text, is_correct, points
+        FROM public."RESPUESTA"
+        WHERE questions_id = $1
+      `, [pregunta.id]);
+
+      resultado.push({
+        id: pregunta.id,
+        enunciado: pregunta.questions_text,
+        respuestas: respuestas.rows
+      });
+    }
+
+    res.json(resultado);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getPreguntaAlarma = async (req, res) => {
+  try {
+    const pregunta = await sql.query(`
+      SELECT p.id, p.questions_text
+      FROM public."PREGUNTA" p
+      WHERE p.level_id = 4
+      ORDER BY RANDOM()
+      LIMIT 1
+    `);
+
+    if (pregunta.rows.length === 0) {
+      return res.status(404).json({ error: "No hay preguntas de nivel 4 en la BD" });
+    }
+
+    const p = pregunta.rows[0];
+
+    const respuestas = await sql.query(`
+      SELECT id, questions_id, answers_text, is_correct, points
+      FROM "RESPUESTA"
+      WHERE questions_id = $1
+    `, [p.id]);
+
+    res.json({
+      id: p.id,
+      enunciado: p.questions_text,
+      respuestas: respuestas.rows
+    });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

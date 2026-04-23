@@ -41,7 +41,7 @@ async function main() {
       console.log("Servidor en http://localhost:8080");
     });
   } catch (error) {
-    console.error("error:", error.message);
+    console.error("error:", error);
   }
 }
 

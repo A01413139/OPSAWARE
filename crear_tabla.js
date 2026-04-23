@@ -14,9 +14,9 @@ async function crearTabla() {
       );
     `);
 
-    console.log("✅ Tabla creada correctamente");
+    console.log("Tabla creada correctamente");
   } catch (error) {
-    console.error("❌ Error:", error.message);
+    console.error("Error:", error.message);
   }
 }
 

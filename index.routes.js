@@ -1,15 +1,21 @@
 import { Router } from "express";
-import { getAPI, postAPI, registrarSesion, registrarUsuario,  getPreguntasQuiz, getPreguntaAlarma } from "./controladores/index.controladores.js";
+import { getAPI, postAPI, registrarSesion, registrarUsuario,  getPreguntasQuiz, getPreguntaAlarma, guardarProgreso, getEstadisticas, loginUsuario } from "./controladores/index.controladores.js";
 import bcrypt from "bcrypt";
 
 const router = Router();
 
 router.get("/", getAPI);
 router.post("/", postAPI);
-router.get("/preguntas/quiz/:nivel", getPreguntasQuiz);
-router.get("/preguntas/alarma",  getPreguntaAlarma);
 router.post("/sesion", registrarSesion);
 router.post("/registro", registrarUsuario);
+
+//Agregados loginUsuario, getPreguntasQuiz, getPreguntaAlarma, guardarProgreso
+//Modificados getEstadisticas
+router.post("/login", loginUsuario);
+router.get("/preguntas/quiz/:nivel", getPreguntasQuiz);
+router.get("/preguntas/alarma",  getPreguntaAlarma);
+router.post("/progreso", guardarProgreso);
+router.get("/estadisticas", getEstadisticas);
 
 router.post("/login", async (req, res) => {
   const { correo, clave } = req.body;

@@ -21,7 +21,7 @@ export const getPreguntasQuiz = async (req, res) => {
       FROM public."PREGUNTA" p
       WHERE p.level_id = $1
       ORDER BY RANDOM()
-      LIMIT 10
+      LIMIT 6
   `, [nivel]);
 
     if (preguntas.rows.length === 0) {

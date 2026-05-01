@@ -130,6 +130,7 @@ export const guardarProgreso = async (req, res) => {
 
 export const loginUsuario = async (req, res) => {
   const { correo, clave } = req.body;
+<<<<<<< HEAD
  
   if (!correo || !clave)
     return res.status(400).json({ ok: false, mensaje: "Correo y clave son requeridos." });
@@ -137,10 +138,21 @@ export const loginUsuario = async (req, res) => {
   try {
     const result = await sql.query(
       `SELECT id_usuario, nombre, correo, "contraseña"
+=======
+
+  if (!correo || !clave) {
+    return res.status(400).json({ ok: false, mensaje: "Correo y clave son requeridos." });
+  }
+
+  try {
+    const result = await sql.query(
+      `SELECT id_usuario, nombre, correo, password, tipo_usuario
+>>>>>>> e2a0726 (ultima act)
        FROM public."USUARIO"
        WHERE correo = $1`,
       [correo]
     );
+<<<<<<< HEAD
  
     if (result.rows.length === 0)
       return res.status(401).json({ ok: false, mensaje: "Correo o clave incorrectos." });
@@ -164,6 +176,34 @@ export const loginUsuario = async (req, res) => {
       user_id:    usuario.id_usuario  
     });
  
+=======
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ ok: false, mensaje: "Correo o clave incorrectos." });
+    }
+
+    const usuario = result.rows[0];
+
+    if (clave !== usuario.password) {
+      return res.status(401).json({ ok: false, mensaje: "Correo o clave incorrectos." });
+    }
+
+    await sql.query(
+      `UPDATE public."USUARIO"
+       SET ultimo_acceso = NOW()
+       WHERE id_usuario = $1`,
+      [usuario.id_usuario]
+    );
+
+    res.json({
+      ok: true,
+      usuario: usuario.nombre,
+      correo: usuario.correo,
+      user_id: usuario.id_usuario,
+      role: usuario.tipo_usuario
+    });
+
+>>>>>>> e2a0726 (ultima act)
   } catch (error) {
     console.error("[loginUsuario]", error.message);
     res.status(500).json({ ok: false, mensaje: "Error del servidor." });
@@ -171,12 +211,28 @@ export const loginUsuario = async (req, res) => {
 };
  
 export const registrarUsuario = async (req, res) => {
-  const { first_name, last_name, email, password } = req.body;
-  const username = (first_name + last_name).toLowerCase().replace(/\s/g, "") + Math.floor(Math.random() * 1000);
+  const { first_name, last_name, email, role, password } = req.body;
+
+  const nombre = `${first_name} ${last_name}`;
+  const tipoUsuario = role || "externo";
+
+  // 🔐 Validación dominio
+  if (tipoUsuario === "empleado") {
+    if (!email.endsWith("@rockwell.com")) {
+      return res.status(400).json({
+        error: "Solo correos con dominio de la empresa pueden registrarse como empleados."
+      });
+    }
+  }
+
+  const idRol =
+    tipoUsuario === "admin" ? 1 :
+    tipoUsuario === "empleado" ? 4 :
+    5;
 
   try {
     const existe = await sql.query(
-      "SELECT user_id FROM users WHERE email = $1",
+      `SELECT id_usuario FROM public."USUARIO" WHERE correo = $1`,
       [email]
     );
 
@@ -184,39 +240,37 @@ export const registrarUsuario = async (req, res) => {
       return res.status(400).json({ error: "El correo ya está registrado." });
     }
 
-    const hash = await bcrypt.hash(password, 10);
-
     await sql.query(
-      `INSERT INTO users (first_name, last_name, username, email, password)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [first_name, last_name, username, email, hash]
+      `INSERT INTO public."USUARIO"
+       (nombre, correo, "país", tipo_usuario, password, fecha_registro, id_rol)
+       VALUES ($1, $2, $3, $4, $5, NOW(), $6)`,
+      [nombre, email, "México", tipoUsuario, password, idRol]
     );
 
     res.json({ mensaje: "Usuario creado correctamente." });
 
-    const { first_name, last_name, email, role, password } = req.body;
-
-await sql.query(
-  `INSERT INTO users (first_name, last_name, username, email, password, role)
-   VALUES ($1, $2, $3, $4, $5, $6)`,
-  [first_name, last_name, username, email, hash, role || 'externo']
-);
-
   } catch (error) {
+    console.error("[registrarUsuario]", error.message);
     res.status(500).json({ error: error.message });
   }
 };
 
 export const registrarSesion = async (req, res) => {
-  const { user_id, puntaje, completada, nivel_alcanzado, preguntas_correctas, preguntas_incorrectas, dificultad } = req.body;
+  const { id_usuario, id_nivel, puntaje, sc_ganados, intentos_usados, preguntas_correctas, preguntas_incorrectas } = req.body;
+  
+  if (!id_usuario || !id_nivel) {
+    return res.status(400).json({ error: "id_usuario e id_nivel son requeridos." });
+  }
+
   try {
     await sql.query(
-      `INSERT INTO sesiones (user_id, simulacion_id, puntaje, completada, nivel_alcanzado, preguntas_correctas, preguntas_incorrectas, dificultad)
-       VALUES ($1, 1, $2, $3, $4, $5, $6, $7)`,
-      [user_id, puntaje, completada, nivel_alcanzado || 1, preguntas_correctas || 0, preguntas_incorrectas || 0, dificultad || 'facil']
+      `INSERT INTO public."PROGRESO" (id_usuario, id_nivel, puntaje, sc_ganados, intentos_usados, estado, fecha_inicio, preguntas_correctas, preguntas_incorrectas)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, $8)`,
+      [id_usuario, id_nivel, puntaje || 0, sc_ganados || 0, intentos_usados || 1, 'en progreso', preguntas_correctas || 0, preguntas_incorrectas || 0]
     );
     res.json({ mensaje: "Sesión registrada correctamente" });
   } catch (error) {
+    console.error("[registrarSesion] Error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };

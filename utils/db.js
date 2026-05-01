@@ -12,7 +12,7 @@ const config = {
   port: Number(process.env.DB_PORT),
   database: process.env.DB_NAME,
   ssl: {
-    rejectUnauthorized: true,
+    rejectUnauthorized: false,
     ca: `-----BEGIN CERTIFICATE-----
 MIIEUDCCArigAwIBAgIUR9jl+SqIBT4NmHXrVcQ1dFKt/0QwDQYJKoZIhvcNAQEM
 BQAwQDE+MDwGA1UEAww1YzE3YjcxYWUtY2MyNS00M2QzLTllMTgtNmZhODYyNmVi
